@@ -15,17 +15,25 @@ async function startServer() {
   // API Route for fetching stock data
   app.get('/api/stock/:symbol', async (req, res) => {
     try {
-      let symbol = req.params.symbol.toUpperCase();
-      if (!symbol.endsWith('.NS') && !symbol.endsWith('.BO')) {
-        symbol += '.NS';
+      const originalSymbol = req.params.symbol.toUpperCase();
+      let quote: any = await yahooFinance.quote(originalSymbol).catch(() => null);
+      
+      // If original symbol not found, and it doesn't have an Indian suffix, try adding .NS
+      if (!quote && !originalSymbol.includes('.')) {
+        quote = await yahooFinance.quote(originalSymbol + '.NS').catch(() => null);
+        
+        // If STILL not found, try adding .BO
+        if (!quote) {
+           quote = await yahooFinance.quote(originalSymbol + '.BO').catch(() => null);
+        }
       }
-      const quote: any = await yahooFinance.quote(symbol);
+
       if (!quote) {
         return res.status(404).json({ error: 'Stock not found' });
       }
       res.json({
         symbol: quote.symbol,
-        longName: quote.longName || quote.shortName || symbol,
+        longName: quote.longName || quote.shortName || quote.symbol,
         price: quote.regularMarketPrice,
         currency: quote.currency
       });
