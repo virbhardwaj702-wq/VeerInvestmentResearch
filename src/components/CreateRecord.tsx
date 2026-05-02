@@ -56,7 +56,8 @@ export function CreateRecord() {
     setFetchingStock(true);
     setError("");
     try {
-      const res = await fetch(`/api/stock/${symbol}`);
+      const baseUrl = '/api/stock';
+      const res = await fetch(`${baseUrl}/${symbol}`);
       if (!res.ok) {
         throw new Error("Failed to fetch stock or not found.");
       }
@@ -93,7 +94,7 @@ export function CreateRecord() {
     try {
       const recordId = id || doc(collection(db, "stockRecords")).id;
       const ref = doc(db, "stockRecords", recordId);
-      const payload = {
+      const payload: any = {
         userId: user!.uid,
         symbol: symbol.toUpperCase() + (symbol.toUpperCase().endsWith('.NS') ? '' : '.NS'),
         companyName,
@@ -102,14 +103,17 @@ export function CreateRecord() {
         status,
         timeframes,
         candlePatterns,
-        createdAt: recordCreatedAt || Date.now(),
-        updatedAt: Date.now()
+        updatedAt: serverTimestamp()
       };
 
-      await setDoc(ref, payload);
+      if (!id) {
+        payload.createdAt = serverTimestamp();
+      }
+
+      await setDoc(ref, payload, { merge: true });
       navigate("/");
     } catch (err) {
-      handleFirestoreError(err, OperationType.WRITE, `stockRecords`);
+      handleFirestoreError(err, id ? OperationType.UPDATE : OperationType.WRITE, `stockRecords`);
       setError(String(err));
     } finally {
       setLoading(false);

@@ -16,15 +16,13 @@ async function startServer() {
   app.get('/api/stock/:symbol', async (req, res) => {
     try {
       const originalSymbol = req.params.symbol.toUpperCase();
-      let quote: any = await yahooFinance.quote(originalSymbol).catch(() => null);
+      let quote: any = await yahooFinance.quote(originalSymbol, {}, { validateResult: false } as any).catch(() => null);
       
-      // If original symbol not found, and it doesn't have an Indian suffix, try adding .NS
       if (!quote && !originalSymbol.includes('.')) {
-        quote = await yahooFinance.quote(originalSymbol + '.NS').catch(() => null);
+        quote = await yahooFinance.quote(originalSymbol + '.NS', {}, { validateResult: false } as any).catch(() => null);
         
-        // If STILL not found, try adding .BO
         if (!quote) {
-           quote = await yahooFinance.quote(originalSymbol + '.BO').catch(() => null);
+           quote = await yahooFinance.quote(originalSymbol + '.BO', {}, { validateResult: false } as any).catch(() => null);
         }
       }
 

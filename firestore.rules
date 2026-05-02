@@ -23,11 +23,11 @@ service cloud.firestore {
           && data.email is string && data.email.size() <= 256
           && data.role is string && (data.role == 'Admin' || data.role == 'User')
           && data.isSubscriber is bool
-          && data.createdAt is number;
+          && (data.createdAt is timestamp || data.createdAt is number);
     }
 
     function isValidStockRecord(data) {
-      return data.keys().hasAll(['userId', 'symbol', 'companyName', 'currentPrice', 'type', 'status', 'timeframes', 'candlePatterns', 'createdAt', 'updatedAt']) && data.keys().size() == 10
+      let isBasicValid = data.keys().hasAll(['userId', 'symbol', 'companyName', 'currentPrice', 'type', 'status', 'timeframes', 'candlePatterns', 'createdAt', 'updatedAt'])
           && data.userId is string
           && data.userId == request.auth.uid
           && data.symbol is string && data.symbol.size() <= 30
@@ -37,30 +37,33 @@ service cloud.firestore {
           && data.status is string && (data.status == 'Approaching' || data.status == 'In the zone' || data.status == 'Reacting from zone')
           && data.timeframes is list && data.timeframes.size() <= 6
           && data.candlePatterns is list && data.candlePatterns.size() <= 2
-          && data.createdAt is number
-          && data.updatedAt is number;
+          && (data.createdAt is timestamp || data.createdAt is number)
+          && (data.updatedAt is timestamp || data.updatedAt is number);
+      
+      let sizeCheck = data.keys().size() >= 10 && data.keys().size() <= 12;
+      return isBasicValid && sizeCheck;
     }
 
     function isValidTradeRecord(data) {
-      let isBasicValid = data.keys().hasAll(['userId', 'symbol', 'companyName', 'side', 'entryPrice', 'stopLoss', 'target', 'duration', 'status', 'createdAt', 'updatedAt'])
+      let isBasicValid = data.keys().hasAll(['userId', 'symbol', 'companyName', 'currentPrice', 'side', 'entryPrice', 'stopLoss', 'target', 'duration', 'status', 'createdAt', 'updatedAt'])
           && data.userId is string
           && data.userId == request.auth.uid
           && data.symbol is string && data.symbol.size() <= 30
           && data.companyName is string && data.companyName.size() <= 150
+          && data.currentPrice is number
           && data.side is string && (data.side == 'Buy' || data.side == 'Sell')
           && data.entryPrice is number
           && data.stopLoss is number
           && data.target is number
           && data.duration is string && (data.duration == 'Long Term' || data.duration == 'Short Term')
           && data.status is string && (data.status == 'Open' || data.status == 'Won' || data.status == 'Lost' || data.status == 'Breakeven' || data.status == 'Closed')
-          && data.createdAt is number
-          && data.updatedAt is number;
+          && (data.createdAt is timestamp || data.createdAt is number)
+          && (data.updatedAt is timestamp || data.updatedAt is number);
 
-      let hasCurrentPrice = data.keys().hasAny(['currentPrice']) ? data.currentPrice is number : true;
       let hasExitPrice = data.keys().hasAny(['exitPrice']) ? data.exitPrice is number : true;
-      let sizeCheck = data.keys().size() >= 11 && data.keys().size() <= 13;
+      let sizeCheck = data.keys().size() >= 12 && data.keys().size() <= 15;
 
-      return isBasicValid && hasCurrentPrice && hasExitPrice && sizeCheck;
+      return isBasicValid && hasExitPrice && sizeCheck;
     }
 
     match /users/{userId} {

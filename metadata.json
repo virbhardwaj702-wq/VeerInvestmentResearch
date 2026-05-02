@@ -1,6 +1,6 @@
 {
-  "name": "",
-  "description": "",
+  "name": "Trading Journal Pro",
+  "description": "A comprehensive trading journal with real-time stock data fetching, trade recording, and performance tracking.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }

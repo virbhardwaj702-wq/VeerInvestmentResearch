@@ -22,7 +22,8 @@ export const loginWithGoogle = async () => {
       await setDoc(userRef, {
         email: result.user.email,
         role: isInitialAdmin ? 'Admin' : 'User',
-        createdAt: Date.now()
+        isSubscriber: false,
+        createdAt: Date.now() // Keeping as number for now to match current rule and user expectations, but will update rule to be flexible
       });
     }
   } catch (error) {

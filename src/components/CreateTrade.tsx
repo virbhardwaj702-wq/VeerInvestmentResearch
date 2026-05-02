@@ -4,11 +4,14 @@ import { doc, getDoc, setDoc, collection, serverTimestamp } from "firebase/fires
 import { Search, Loader2 } from "lucide-react";
 import { db, auth, handleFirestoreError, OperationType } from "../lib/firebase";
 
+import { useAuth } from "../contexts/AuthContext";
+
 const DURATIONS = ["Short Term", "Long Term"];
 const STATUSES = ["Open", "Won", "Lost", "Breakeven", "Closed"];
 
 export function CreateTrade() {
   const { id } = useParams();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [fetchingStock, setFetchingStock] = useState(false);
@@ -25,6 +28,7 @@ export function CreateTrade() {
   const [duration, setDuration] = useState<string>("Short Term");
   const [status, setStatus] = useState<string>("Open");
   const [exitPrice, setExitPrice] = useState<string>("");
+  const [tradeCreatedAt, setTradeCreatedAt] = useState<any>(null);
 
   useEffect(() => {
     if (id) {
@@ -39,7 +43,7 @@ export function CreateTrade() {
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         const data = docSnap.data();
-        setSymbol(data.symbol);
+        setSymbol(data.symbol.replace(".NS", ""));
         setCompanyName(data.companyName);
         setCurrentPrice(data.currentPrice);
         setSide(data.side);
@@ -49,9 +53,10 @@ export function CreateTrade() {
         setDuration(data.duration || "Short Term");
         setStatus(data.status || "Open");
         setExitPrice(data.exitPrice?.toString() || "");
+        setTradeCreatedAt(data.createdAt);
       }
     } catch (err: any) {
-      handleFirestoreError(err, OperationType.GET, "tradeRecords");
+      handleFirestoreError(err, OperationType.GET, `tradeRecords/${id}`);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -63,12 +68,13 @@ export function CreateTrade() {
     setFetchingStock(true);
     setError("");
     try {
-      const res = await fetch(`/api/stock/${symbol}`);
+      const baseUrl = '/api/stock';
+      const res = await fetch(`${baseUrl}/${symbol}`);
       if (!res.ok) throw new Error("Stock not found or error fetching");
       const data = await res.json();
-      setCompanyName(data.companyName);
-      setCurrentPrice(data.currentPrice);
-      if (!entryPrice) setEntryPrice(data.currentPrice.toString());
+      setCompanyName(data.longName);
+      setCurrentPrice(data.price);
+      if (!entryPrice) setEntryPrice(data.price.toString());
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -78,8 +84,8 @@ export function CreateTrade() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!auth.currentUser) return;
-    if (!companyName || !currentPrice) {
+    if (!user) return;
+    if (!companyName || currentPrice === "") {
       setError("Please fetch stock info first.");
       return;
     }
@@ -92,8 +98,8 @@ export function CreateTrade() {
       const ref = doc(db, "tradeRecords", tradeId);
 
       const payload: any = {
-        userId: auth.currentUser.uid,
-        symbol: symbol.toUpperCase(),
+        userId: user.uid,
+        symbol: symbol.toUpperCase() + (symbol.toUpperCase().endsWith('.NS') ? '' : '.NS'),
         companyName,
         currentPrice: Number(currentPrice),
         side,
@@ -109,7 +115,7 @@ export function CreateTrade() {
         payload.createdAt = serverTimestamp();
       }
       
-      if (exitPrice) {
+      if (exitPrice !== "") {
         payload.exitPrice = Number(exitPrice);
       }
 
@@ -118,6 +124,7 @@ export function CreateTrade() {
     } catch (err: any) {
       handleFirestoreError(err, id ? OperationType.UPDATE : OperationType.CREATE, "tradeRecords");
       setError(err.message);
+    } finally {
       setLoading(false);
     }
   };
