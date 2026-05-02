@@ -1,0 +1,76 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with role",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["Admin", "User"] },
+        "isSubscriber": { "type": "boolean" },
+        "createdAt": { "type": "number", "description": "Timestamp" }
+      },
+      "required": ["email", "role", "isSubscriber", "createdAt"]
+    },
+    "StockRecord": {
+      "title": "Stock Record",
+      "description": "A stock market research record",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "symbol": { "type": "string" },
+        "companyName": { "type": "string" },
+        "currentPrice": { "type": "number" },
+        "type": { "type": "string", "enum": ["Demand", "Supply"] },
+        "status": { "type": "string", "enum": ["Approaching", "In the zone", "Reacting from zone"] },
+        "timeframes": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["Daily", "Weekly", "Monthly", "Quarterly", "Half-Yearly", "Yearly"] }
+        },
+        "candlePatterns": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["Strong candles", "2-5 base candles"] }
+        },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["userId", "symbol", "companyName", "currentPrice", "type", "status", "timeframes", "candlePatterns", "createdAt", "updatedAt"]
+    },
+    "TradeRecord": {
+      "title": "Trade Record",
+      "description": "A trade execution record for performance tracking",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "symbol": { "type": "string" },
+        "companyName": { "type": "string" },
+        "currentPrice": { "type": "number" },
+        "side": { "type": "string", "enum": ["Buy", "Sell"] },
+        "entryPrice": { "type": "number" },
+        "stopLoss": { "type": "number" },
+        "target": { "type": "number" },
+        "duration": { "type": "string", "enum": ["Long Term", "Short Term"] },
+        "status": { "type": "string", "enum": ["Open", "Won", "Lost", "Breakeven", "Closed"] },
+        "exitPrice": { "type": "number" },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["userId", "symbol", "companyName", "side", "entryPrice", "stopLoss", "target", "duration", "status", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Stores user profiles and roles."
+    },
+    "stockRecords/{recordId}": {
+      "schema": { "$ref": "#/entities/StockRecord" },
+      "description": "Stores research records for stocks."
+    },
+    "tradeRecords/{tradeId}": {
+      "schema": { "$ref": "#/entities/TradeRecord" },
+      "description": "Stores trade execution records for users."
+    }
+  }
+}
+
