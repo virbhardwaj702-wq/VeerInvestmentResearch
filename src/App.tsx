@@ -41,6 +41,7 @@ function AppRoutes() {
       <Route path="/trades/add" element={<ProtectedRoute><CreateTrade /></ProtectedRoute>} />
       <Route path="/trades/edit/:id" element={<ProtectedRoute><CreateTrade /></ProtectedRoute>} />
       <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminPanel /></ProtectedRoute>} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
