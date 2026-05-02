@@ -1,13 +1,13 @@
 import serverless from 'serverless-http';
-import express from 'express';
+import express, { Router } from 'express';
 import YahooFinance from 'yahoo-finance2';
 
 const yahooFinance = new YahooFinance();
 const app = express();
 
-app.use(express.json());
+const router = Router();
 
-app.get(['/api/stock/:symbol', '/.netlify/functions/api/stock/:symbol'], async (req, res) => {
+router.get('/stock/:symbol', async (req, res) => {
   try {
     const originalSymbol = req.params.symbol.toUpperCase();
     let quote: any = await yahooFinance.quote(originalSymbol).catch(() => null);
@@ -36,5 +36,12 @@ app.get(['/api/stock/:symbol', '/.netlify/functions/api/stock/:symbol'], async (
     res.status(500).json({ error: 'Failed to fetch stock info' });
   }
 });
+
+// Configure app to use the router on various possible prefixes
+app.use(express.json());
+app.use('/api', router);
+app.use('/.netlify/functions/api', router);
+// Also bind directly to root in case proxying strips the path
+app.use('/', router);
 
 export const handler = serverless(app);
